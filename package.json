@@ -1,0 +1,19 @@
+{
+  "name": "zxaos-aoc-2018",
+  "version": "0.0.1",
+  "description": "advent-of-code 2018 solutions",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "author": "Matt Bond <github@zxaos.codefire.io>",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "ava": "1.0.0-rc.2"
+  },
+  "ava": {
+		"files": [
+			"tests/*.js"
+		]
+  }
+}
