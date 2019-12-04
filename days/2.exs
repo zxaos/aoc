@@ -1,3 +1,6 @@
+# Using lists for the random access of the intcode computer is wildly inefficient.
+# This should probably have used a map, but I haven't learned them yet
+
 defmodule DayTwo do
 
   def fetch_four_at(index, list) do
@@ -14,6 +17,23 @@ defmodule DayTwo do
   def patch_program(list, noun, verb) do
     fixed_input = List.replace_at(list, 1, noun)
       |> List.replace_at(2, verb)
+  end
+
+  def find_patch_for_output(program, target, 0, 100) do
+    IO.puts "Failed to find valid patch for target"
+  end
+  def find_patch_for_output(program, target, 100, verb) do
+    find_patch_for_output(program, target, 0, verb + 1)
+  end
+  def find_patch_for_output(program, target, noun \\ 0, verb \\ 0) do
+    IO.puts "testing patch: #{noun}, #{verb}"
+    patched_program = patch_program(program, noun, verb)
+    output = run_program patched_program
+    if output == target do
+      IO.puts "Success for target #{target} with noun #{noun} and verb #{verb}"
+    else
+      find_patch_for_output(program, target, noun + 1, verb)
+    end
   end
 
   def run_step(index, tape, [1, a, b, dst]) do
@@ -44,7 +64,4 @@ parsed_input = with {:ok, contents} = File.read("2.input") do
   Enum.map split, &(String.to_integer(&1))
 end
 
-# before running the program, replace position 1 with the value 12 and replace position 2 with the value 2.
-fixed_input = DayTwo.patch_program(parsed_input, 12, 2)
-
-IO.puts "Position zero value after program completion: #{DayTwo.run_program fixed_input }"
+DayTwo.find_patch_for_output(parsed_input, 19690720)
