@@ -1,1 +1,4 @@
 *.input
+*.input.*
+*.webarchive
+.DS_Store
