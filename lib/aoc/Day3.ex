@@ -1,18 +1,20 @@
-defmodule Coordinate do
+defmodule Aoc.Day3.Coordinate do
   defstruct x: 0, y: 0
 end
 
-defmodule WireDirection do
+defmodule Aoc.Day3.WireDirection do
   defstruct direction: 'R', distance: 0
 
   def new(str) do
     {direction, distance} = String.split_at(str, 1)
     distance = String.to_integer(distance)
-    %WireDirection{direction: direction, distance: distance}
+    %Aoc.Day3.WireDirection{direction: direction, distance: distance}
   end
 end
 
-defmodule DayThree do
+defmodule Aoc.Day3 do
+  alias Aoc.Day3.Coordinate
+  alias Aoc.Day3.WireDirection
   def find_nearest_intersection (wires) do
     [{first, first_map}, {second, second_map}] = Enum.map(wires, &coordinates_from_wire/1)
     intersections = first -- (first -- second)   # instersection of wire coordinates
@@ -72,13 +74,14 @@ defmodule DayThree do
   def manhattan_distance(first, second \\ %Coordinate{}) do
     abs(first.x - second.x) + abs(first.y - second.y)
   end
-end
 
-input_file = "3.input"
-parsed_input = with {:ok, contents} = File.read(input_file) do
-  String.split(contents, "\n", trim: true)
-  |> Enum.map(&(String.split &1, ",", trim: true))
-  |> Enum.map( fn (wire) -> Enum.map(wire, &WireDirection.new/1) end)
-end
+  def print_solution() do
+    parsed_input = with {:ok, contents} = File.read("3.input") do
+      String.split(contents, "\n", trim: true)
+      |> Enum.map(&(String.split &1, ",", trim: true))
+      |> Enum.map( fn (wire) -> Enum.map(wire, &WireDirection.new/1) end)
+    end
 
-DayThree.find_nearest_intersection(parsed_input)
+    find_nearest_intersection(parsed_input)
+  end
+end

@@ -1,4 +1,4 @@
-defmodule DayOne do
+defmodule Aoc.Day1 do
   def raw_fuel_for_weight (weight) do
     div(weight, 3) - 2
   end
@@ -17,12 +17,13 @@ defmodule DayOne do
   end
   def compounding_fuel(_), do: 0
 
-end
+  def print_solution() do
+    parsed_input = with {:ok, contents} = File.read("1.input") do
+      split = String.split contents, "\n", trim: true
+      Enum.map split, &(String.to_integer(&1))
+    end
 
-parsed_input = with {:ok, contents} = File.read("1.input") do
-  split = String.split contents, "\n", trim: true
-  Enum.map split, &(String.to_integer(&1))
+    IO.puts "Fuel for modules alone: #{raw_fuel_for_modules parsed_input }"
+    IO.puts "Fuel for modules + fuel: #{compounding_fuel_for_modules parsed_input }"
+  end
 end
-
-IO.puts "Fuel for modules alone: #{DayOne.raw_fuel_for_modules parsed_input }"
-IO.puts "Fuel for modules + fuel: #{DayOne.compounding_fuel_for_modules parsed_input }"

@@ -1,3 +1,5 @@
-What is this?
+# What is this?
 
-Advent of Code 2019, in Elixir
+Advent of Code 2019, in Elixir.
+
+Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)

@@ -1,7 +1,7 @@
 # Using lists for the random access of the intcode computer is wildly inefficient.
 # This should probably have used a map, but I haven't learned them yet
 
-defmodule DayTwo do
+defmodule Aoc.Day2 do
 
   def fetch_four_at(index, list) do
     Enum.map(index..index+3, &(Enum.at(list, &1)))
@@ -57,11 +57,12 @@ defmodule DayTwo do
     result
   end
 
-end
+  def print_solution() do
+    parsed_input = with {:ok, contents} = File.read("2.input") do
+      split = String.split contents, ["\n", ","], trim: true
+      Enum.map split, &(String.to_integer(&1))
+    end
 
-parsed_input = with {:ok, contents} = File.read("2.input") do
-  split = String.split contents, ["\n", ","], trim: true
-  Enum.map split, &(String.to_integer(&1))
+    find_patch_for_output(parsed_input, 19690720)
+  end
 end
-
-DayTwo.find_patch_for_output(parsed_input, 19690720)
