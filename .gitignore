@@ -23,7 +23,7 @@ erl_crash.dump
 aoc-*.tar
 
 # Ignore build escript
-./aoc
+/aoc
 
 # Ignore personal challenge input files
 *.input

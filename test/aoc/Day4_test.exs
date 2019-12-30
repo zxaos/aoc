@@ -8,7 +8,7 @@ defmodule CliTest do
     filter_range: 2,
   ]
 
-  test "only adjacent digits pass" do
+  test "only two adjacent digits pass" do
     assert has_adjacent_double_digits(11) == true
     assert has_adjacent_double_digits(22) == true
     assert has_adjacent_double_digits(122) == true
@@ -16,11 +16,14 @@ defmodule CliTest do
     assert has_adjacent_double_digits(1221) == true
     assert has_adjacent_double_digits(2233) == true
     assert has_adjacent_double_digits(-11) == true
+    assert has_adjacent_double_digits(112233) == true
+    assert has_adjacent_double_digits(111122) == true
     assert has_adjacent_double_digits(2) == false
     assert has_adjacent_double_digits(21) == false
     assert has_adjacent_double_digits(212) == false
     assert has_adjacent_double_digits(2121) == false
     assert has_adjacent_double_digits(0) == false
+    assert has_adjacent_double_digits(1234444) == false
   end
 
   test "only increasing digits pass" do

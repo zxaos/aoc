@@ -6,8 +6,8 @@ defmodule Aoc.Day4 do
   def has_adjacent_double_digits (number) do
     number
     |>Integer.digits
-    |>Stream.chunk_every(2, 1, :discard)
-    |>Enum.any?( fn [i, j] -> i == j end)
+    |>Enum.chunk_by(&(&1)) # chunk adjacent duplicate digits
+    |>Enum.any?(&(length(&1) == 2))
   end
 
   @doc """
