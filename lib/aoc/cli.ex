@@ -32,4 +32,5 @@ defmodule Aoc.CLI do
   def run_day(1), do: Aoc.Day1.print_solution()
   def run_day(2), do: Aoc.Day2.print_solution()
   def run_day(3), do: Aoc.Day3.print_solution()
+  def run_day(4), do: Aoc.Day4.print_solution()
 end
