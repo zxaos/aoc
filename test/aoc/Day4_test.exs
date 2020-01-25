@@ -1,4 +1,4 @@
-defmodule CliTest do
+defmodule Day4Test do
   use ExUnit.Case
   doctest Aoc
 
