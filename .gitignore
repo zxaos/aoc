@@ -13,5 +13,6 @@ vendor/
 /vendor/
 /Godeps/
 
-# AOC saves inputs
-*.input
+# AOC saved inputs
+days/**/**/*.input
+days/**/**/input

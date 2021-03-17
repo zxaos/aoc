@@ -1,4 +1,4 @@
-module days/1
+module github.com/zxaos/aoc
 
 go 1.16
 

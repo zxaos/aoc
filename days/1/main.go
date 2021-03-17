@@ -1,16 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"strconv"
+
+	"github.com/zxaos/aoc/lib/input"
 )
 
 func main() {
-	input := parseUIntStream(os.Stdin)
+	input := input.GetUints()
 	result, err := find2020Pair(input)
 	if err != nil {
 		fmt.Println(err)
@@ -49,18 +48,4 @@ func find2020Triple(xs []uint) (uint, error) {
 		}
 	}
 	return 0, errors.New("No triple of values sums to 2020")
-}
-
-func parseUIntStream(r io.Reader) []uint {
-	scanner := bufio.NewScanner(r)
-	scanner.Split(bufio.ScanLines)
-	var xs []uint
-	for scanner.Scan() {
-		value, err := strconv.ParseUint(scanner.Text(), 10, 64)
-		if err != nil {
-			panic("can only parse uints")
-		}
-		xs = append(xs, uint(value))
-	}
-	return xs
 }

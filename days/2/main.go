@@ -1,12 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
 	"strconv"
 	"strings"
+
+	"github.com/zxaos/aoc/lib/input"
 )
 
 type passwordEntry struct {
@@ -43,7 +42,7 @@ func pwdlineFromStrings(line []string) passwordEntry {
 }
 
 func main() {
-	input := splitInput(os.Stdin)
+	input := input.GetWordsByLine()
 
 	validPasswordsByCount := 0
 	validPasswordsByPosition := 0
@@ -60,14 +59,4 @@ func main() {
 	fmt.Println("(old style) valid passdwords: ", validPasswordsByCount)
 	fmt.Println("(new style) valid passdwords: ", validPasswordsByPosition)
 
-}
-
-func splitInput(r io.Reader) [][]string {
-	scanner := bufio.NewScanner(r)
-	scanner.Split(bufio.ScanLines)
-	var xs [][]string
-	for scanner.Scan() {
-		xs = append(xs, strings.Split(scanner.Text(), " "))
-	}
-	return xs
 }
