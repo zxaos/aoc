@@ -1,0 +1,4 @@
+{
+  "days/*/main.go":  {"type": "day", "alternate": "days/{}/main_test.go"},
+  "days/*/main_test.go":  {"type": "daytest", "alternate": "days/{}/main.go"}
+}
