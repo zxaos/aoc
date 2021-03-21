@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	// "strconv"
-	// "strings"
 
 	"github.com/zxaos/aoc/lib/input"
 )
@@ -17,11 +15,11 @@ const (
 
 type terrainMap struct {
 	terrain [][]rune
-	columns uint
-	rows    uint
+	columns int
+	rows    int
 }
 
-func (m *terrainMap) position(x, y uint) rune {
+func (m *terrainMap) position(x, y int) rune {
 	if y > m.rows {
 		panic("Invalid column")
 	}
@@ -35,13 +33,13 @@ func (m *terrainMap) position(x, y uint) rune {
 
 func newTerrainMap(lines []string) (*terrainMap, error) {
 	m := new(terrainMap)
-	m.columns = uint(len([]rune(lines[0])))
-	m.rows = uint(len(lines))
+	m.columns = len([]rune(lines[0]))
+	m.rows = len(lines)
 	terrain := make([][]rune, 0, m.rows)
 
 	for _, line := range lines {
 		r := []rune(line)
-		if uint(len(r)) != m.columns {
+		if len(r) != m.columns {
 			return nil, errors.New("Can't parse terrain line ")
 		}
 
@@ -49,8 +47,36 @@ func newTerrainMap(lines []string) (*terrainMap, error) {
 	}
 	m.terrain = terrain
 
-	fmt.Printf("terrain is %d by %d\n", m.columns, m.rows)
 	return m, nil
+}
+
+func (m *terrainMap) plotLinearPath(startX, startY, slopeX, slopeY int) ([]rune, error) {
+	// Ensure the Y is within the range of rows
+	var path []rune
+	if startY > m.rows || startY < 0 {
+		return path, errors.New("Starting Y is not in range")
+	}
+
+	x := int(startX)
+	y := int(startY)
+
+	for y < int(m.rows) && y >= 0 {
+		path = append(path, m.position(x, y))
+		x += slopeX
+		y += slopeY
+	}
+
+	return path, nil
+}
+
+func obstaclesInPath(path []rune) uint {
+	var obstacles uint
+	for _, x := range path {
+		if x != terrainOpen {
+			obstacles++
+		}
+	}
+	return obstacles
 }
 
 func main() {
@@ -62,5 +88,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(tm.position(0, 0))
+	path, err := tm.plotLinearPath(0, tm.rows-1, 3, -1)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	obstacles := obstaclesInPath(path)
+
+	fmt.Printf("obstacles in first test path: %d\n", obstacles)
+
+	slopes := [][]int{{1, -1}, {5, -1}, {7, -1}, {1, -2}}
+	obstacle_product := obstacles
+
+	for _, slope := range slopes {
+		path, err := tm.plotLinearPath(0, tm.rows-1, slope[0], slope[1])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		obstacle_product *= obstaclesInPath(path)
+	}
+
+	fmt.Printf("product of obstacles in all paths: %d\n", obstacle_product)
+
 }
