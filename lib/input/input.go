@@ -2,8 +2,8 @@ package input
 
 import (
 	"bufio"
-	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -29,8 +29,7 @@ func parseArgs() string {
 			return os.Args[2]
 		}
 	}
-	fmt.Fprintln(os.Stderr, "Usage: -f <filename>, -f, or no arguments will read from stdin")
-	os.Exit(1)
+	log.Fatalf("Usage: -f <filename>, -f, or no arguments will read from stdin")
 	return ""
 }
 
@@ -42,8 +41,7 @@ func getInputStream() (handle io.ReadCloser) {
 	} else {
 		f, err := os.Open(filename)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
+			log.Fatalf("error: %v\n", err)
 		}
 		handle = f
 	}
@@ -53,8 +51,7 @@ func getInputStream() (handle io.ReadCloser) {
 func closeHandle(f io.ReadCloser) {
 	err := f.Close()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("error: %v\n", err)
 	}
 }
 
