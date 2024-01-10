@@ -5,7 +5,7 @@ use std::{
 };
 
 fn main() {
-    let path = Path::new("input.txt");
+    let path = Path::new("inputs/input.2.txt");
     let file = File::open(&path).expect("Failed to open input");
 
     let reader = io::BufReader::new(file);

@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read, path::Path};
 
 fn main() {
-    let path = Path::new("input.txt");
+    let path = Path::new("inputs/input.1.txt");
     let mut file = File::open(&path).expect("Failed to open input");
 
     let mut input = String::new();
