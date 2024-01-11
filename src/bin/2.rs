@@ -1,26 +1,20 @@
-use std::{
-    fs::File,
-    io::{self, BufRead},
-    path::Path,
-};
+use aoc_2015::aoc_io;
 
 fn main() {
-    let path = Path::new("inputs/input.2.txt");
-    let file = File::open(&path).expect("Failed to open input");
-
-    let reader = io::BufReader::new(file);
-
     let mut paper_sum: u32 = 0;
     let mut ribbon_length: u32 = 0;
-    for line in reader.lines() {
+    for line in aoc_io::get_input_as_lines(2) {
         let line = line.unwrap();
         let dims = split_dimensions(line);
         paper_sum += calculate_paper_area(dims);
         ribbon_length += calculate_ribbon_length(dims);
     }
 
-    println!("1: Total paper: {paper_sum}");
-    println!("2: Total ribbon length: {ribbon_length}");
+    aoc_io::put_aoc_named_output(
+        (Some(i64::from(paper_sum)), Some(i64::from(ribbon_length))),
+        "Total paper",
+        "Total ribbon length",
+    );
 }
 
 fn split_dimensions(input_dims: String) -> (u8, u8, u8) {

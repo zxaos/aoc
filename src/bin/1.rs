@@ -1,7 +1,7 @@
 use aoc_2015::aoc_io;
 
 fn main() {
-    let input = aoc_io::get_aoc_input_as_string(1);
+    let input = aoc_io::get_input_as_string(1);
     let result = count_floors(input);
     aoc_io::put_aoc_output((Some(result.0), Some(result.1)));
 }
