@@ -10,7 +10,7 @@ pub mod aoc_io {
         let mut input = String::new();
         file.read_to_string(&mut input)
             .expect("Failed to read input");
-        input
+        input.trim().to_string()
     }
 
     pub fn get_input_as_lines(day: u8) -> io::Lines<io::BufReader<File>> {
