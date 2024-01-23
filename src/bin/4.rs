@@ -7,7 +7,7 @@ fn main() {
     let first_number = md5_leading_zeroes_from(&input, 5);
     let second_number = md5_leading_zeroes_from(&input, 6);
 
-    aoc_io::put_aoc_output((Some(first_number.into()), Some(second_number.into())));
+    aoc_io::put_aoc_output((Some(first_number), Some(second_number)));
 }
 
 fn md5_leading_zeroes_from(prefix: &str, num_zeroes: usize) -> u32 {

@@ -1,5 +1,6 @@
 pub mod aoc_io {
     use std::{
+        fmt::Display,
         fs::File,
         io::{self, BufRead, Read},
         path::Path,
@@ -26,17 +27,21 @@ pub mod aoc_io {
         file
     }
 
-    pub fn put_aoc_named_output(results: (Option<i64>, Option<i64>), first: &str, second: &str) {
+    pub fn put_aoc_named_output<T: Display>(
+        results: (Option<T>, Option<T>),
+        first: &str,
+        second: &str,
+    ) {
         maybe_print_solution(results.0, 1, Some(first));
         maybe_print_solution(results.1, 2, Some(second));
     }
 
-    pub fn put_aoc_output(results: (Option<i64>, Option<i64>)) {
+    pub fn put_aoc_output<T: Display>(results: (Option<T>, Option<T>)) {
         maybe_print_solution(results.0, 1, None);
         maybe_print_solution(results.1, 2, None);
     }
 
-    fn maybe_print_solution(result: Option<i64>, part: u8, description: Option<&str>) {
+    fn maybe_print_solution<T: Display>(result: Option<T>, part: u8, description: Option<&str>) {
         if let Some(r) = result {
             if let Some(description) = description {
                 println!("{} - {}: {}", part, description, r);
@@ -48,18 +53,3 @@ pub mod aoc_io {
         }
     }
 }
-
-// pub fn add(left: usize, right: usize) -> usize {
-//     left + right
-// }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn it_works() {
-//         let result = add(2, 2);
-//         assert_eq!(result, 4);
-//     }
-// }
