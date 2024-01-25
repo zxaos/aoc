@@ -236,8 +236,8 @@ fn transform_light_array<'a>(
     instruction: &Instruction,
 ) -> &'a mut LightGrid {
     match instruction {
-        Instruction::On(bounds) => lights.on(&bounds),
-        Instruction::Off(bounds) => lights.off(&bounds),
+        Instruction::On(bounds) => lights.on(bounds),
+        Instruction::Off(bounds) => lights.off(bounds),
         Instruction::Toggle(bounds) => lights.toggle(bounds),
         Instruction::Brighten(bounds, amount) => lights.brighten(bounds, *amount),
         Instruction::Dim(bounds) => lights.dim(bounds, 1),

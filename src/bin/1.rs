@@ -20,5 +20,5 @@ fn count_floors(instructions: String) -> (i64, i64) {
             first_basement = Some(i as i64 + 1);
         }
     }
-    return (floor, first_basement.unwrap());
+    (floor, first_basement.unwrap())
 }

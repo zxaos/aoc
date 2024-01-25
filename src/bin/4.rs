@@ -1,5 +1,4 @@
 use aoc_2015::aoc_io;
-use md5;
 
 fn main() {
     let input = aoc_io::get_input_as_string(4);
@@ -11,11 +10,10 @@ fn main() {
 }
 
 fn md5_leading_zeroes_from(prefix: &str, num_zeroes: usize) -> u32 {
-    let num_zeroes = num_zeroes;
     let num_zeroes = format!("{:0num_zeroes$}", 0);
     let mut count = 0;
     loop {
-        let input = format!("{prefix}{}", count.to_string());
+        let input = format!("{prefix}{}", count);
         let digest = format!("{:x}", md5::compute(input));
         if digest.starts_with(&num_zeroes) {
             return count;

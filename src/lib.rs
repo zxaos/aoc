@@ -23,8 +23,7 @@ pub mod aoc_io {
     fn get_file_from_day(day: u8) -> File {
         let pathstring = format!("inputs/input.{}.txt", day);
         let path = Path::new(&pathstring);
-        let file = File::open(&path).expect("Failed to open input");
-        file
+        File::open(path).expect("Failed to open input")
     }
 
     pub fn put_aoc_named_output<T: Display>(
