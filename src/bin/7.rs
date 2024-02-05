@@ -18,27 +18,99 @@ use thiserror::Error;
 fn main() -> Result<(), CircuitError> {
     let lines =
         aoc_2015::aoc_io::get_input_as_lines(7).collect::<Result<Vec<String>, std::io::Error>>()?;
-    let circuit_ops = CircuitOps::from_lines(lines.iter().map(String::as_str))?;
-    let mut circuit = Circuit::new(circuit_ops.len());
-    circuit.resolve_circuit(circuit_ops)?;
-    let result_1 = circuit.get_wire("a").unwrap();
+    let circuit_ops_a = CircuitOp::from_lines(lines.iter().map(String::as_str))?;
+    let mut circuit_ops_b = circuit_ops_a.clone();
+    let mut circuit_a = Circuit::new(circuit_ops_a.len());
+    circuit_a.resolve_circuit(circuit_ops_a)?;
+    let result_a = circuit_a.get_wire("a").unwrap();
 
-    aoc_2015::aoc_io::put_aoc_named_output((Some(result_1), None), "Wire a", "");
+    // Now, take the signal you got on wire a, override wire b to that signal, and reset the other wires
+    //  (including wire a). What new signal is ultimately provided to wire a?
+    let b_wire_idx = str_idx("b").unwrap();
+    let b_pos = circuit_ops_b
+        .iter()
+        .position(|op| op.target == b_wire_idx)
+        .expect("wire b must be defined");
+    circuit_ops_b[b_pos] = CircuitOp {
+        target: b_wire_idx,
+        op: CircuitOpType::Set,
+        operand_a: CircuitOperand::Value(result_a),
+        operand_b: None,
+    };
+
+    let mut circuit_b = Circuit::new(circuit_ops_b.len());
+    circuit_b.resolve_circuit(circuit_ops_b)?;
+    let result_2 = circuit_b.get_wire("a").unwrap();
+
+    aoc_2015::aoc_io::put_aoc_named_output(
+        (Some(result_a), Some(result_2)),
+        "Wire a",
+        "Wire a after second iteration",
+    );
 
     Ok(())
 }
 
 #[derive(Debug, PartialEq, Clone)]
-enum CircuitOps {
-    // Operation(destination, operands...)
-    Set(usize, u16),
-    And(usize, usize, usize),
-    AndFixed(usize, usize, u16),
-    Or(usize, usize, usize),
-    OrFixed(usize, usize, u16),
-    Not(usize, usize),
-    Lshift(usize, usize, u16),
-    Rshift(usize, usize, u16),
+struct CircuitOp {
+    target: usize,
+    op: CircuitOpType,
+    operand_a: CircuitOperand,
+    operand_b: Option<CircuitOperand>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+enum CircuitOperand {
+    Value(u16),
+    Wire(usize),
+}
+
+impl CircuitOperand {
+    pub fn resolve_memo(&mut self, c: &Circuit) -> Option<u16> {
+        use self::CircuitOperand::*;
+        if let Value(result) = self {
+            return Some(*result);
+        }
+
+        if let Wire(wire_id) = self {
+            if let Some(wire_value) = c.get_wire_by_id(wire_id) {
+                let mut newself = Value(wire_value);
+                std::mem::swap(&mut newself, self);
+                Some(wire_value)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Return the resolved value of an operand, or None if the wire has no output
+    pub fn resolve(&self, c: &Circuit) -> Option<u16> {
+        use self::CircuitOperand::*;
+        match self {
+            Value(val) => Some(*val),
+            Wire(id) => c.get_wire_by_id(id),
+        }
+    }
+
+    pub fn build_from_str(s: &str) -> Option<CircuitOperand> {
+        if let Ok(fixed_number) = s.parse::<u16>() {
+            Some(CircuitOperand::Value(fixed_number))
+        } else {
+            Some(CircuitOperand::Wire(str_idx(s)?))
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+enum CircuitOpType {
+    Set,
+    And,
+    Or,
+    Not,
+    Lshift,
+    Rshift,
 }
 
 #[derive(Error, Debug)]
@@ -58,57 +130,66 @@ enum CircuitError {
     UnresolvableInstructionsError(),
 }
 
-impl FromStr for CircuitOps {
+impl FromStr for CircuitOp {
     type Err = CircuitError;
     fn from_str(s: &str) -> Result<Self, CircuitError> {
         use CircuitError::*;
-        use CircuitOps::*;
+        use CircuitOpType::*;
         let (operator, target, operands) =
             Self::tokenize(s).ok_or(ParseInstructionError(s.to_string()))?;
 
-        let op: Option<CircuitOps> = match operator {
-            "SET" => operands[0]
-                .parse::<u16>()
-                .ok()
-                .map(|value| Set(target, value)),
-            "NOT" => str_idx(operands[0]).map(|value| Not(target, value)),
-            "AND" => {
-                // operands might be "ab" or they might be "123"
-                let wire_operands: Option<Vec<usize>> =
-                    operands.iter().map(|op| str_idx(op)).collect();
-                let numeric_operands: Option<Vec<u16>> =
-                    operands.iter().map(|op| op.parse::<u16>().ok()).collect();
-                operands.map(|o| And(target, o[0], o[1]))
-            }
-            "OR" => {
-                let operands: Option<Vec<usize>> = operands.iter().map(|op| str_idx(op)).collect();
-                operands.map(|o| Or(target, o[0], o[1]))
-            }
-            "LSHIFT" => {
-                let oper_a = str_idx(operands[0]);
-                let oper_b = operands[1].parse::<u16>().ok();
-                if let (Some(oper_a), Some(oper_b)) = (oper_a, oper_b) {
-                    Some(Lshift(target, oper_a, oper_b))
-                } else {
-                    None
-                }
-            }
-            "RSHIFT" => {
-                let oper_a = str_idx(operands[0]);
-                let oper_b = operands[1].parse::<u16>().ok();
-                if let (Some(oper_a), Some(oper_b)) = (oper_a, oper_b) {
-                    Some(Rshift(target, oper_a, oper_b))
-                } else {
-                    None
-                }
-            }
+        if operands.len() != 1 && operands.len() != 2 {
+            return Err(ParseInstructionError(
+                format!(
+                    "wrong number of operands for input: {s} -- (Got {}, expected 1 or 2",
+                    operands.len()
+                )
+                .to_string(),
+            ));
+        }
+
+        let operand_a = CircuitOperand::build_from_str(operands[0]).ok_or(
+            CircuitError::ParseInstructionError(("couldn't parse mandatory operand").to_string()),
+        )?;
+
+        let operand_b = operands
+            .get(1)
+            .and_then(|op| CircuitOperand::build_from_str(op));
+
+        let op: Option<CircuitOpType> = match operator {
+            "SET" => Some(Set),
+            "NOT" => Some(Not),
+            "AND" => Some(And),
+            "OR" => Some(Or),
+            "LSHIFT" => Some(Lshift),
+            "RSHIFT" => Some(Rshift),
             _ => None,
         };
-        op.ok_or(CircuitError::ParseInstructionError(s.to_string()))
+
+        let op = op.ok_or(CircuitError::ParseInstructionError(s.to_string()))?;
+
+        // assert that we have a second operand for ops that require it
+        match op {
+            And | Or | Lshift | Rshift => {
+                if operand_b.is_none() {
+                    return Err(CircuitError::ParseInstructionError(
+                        format!("operation {operator} requires a second operand").to_string(),
+                    ));
+                }
+            }
+            _ => (),
+        }
+
+        Ok(CircuitOp {
+            target,
+            op,
+            operand_a,
+            operand_b,
+        })
     }
 }
 
-impl CircuitOps {
+impl CircuitOp {
     fn tokenize(line: &str) -> Option<(&str, usize, Vec<&str>)> {
         // we want this order:
         // operation, destination, operands
@@ -146,31 +227,41 @@ impl CircuitOps {
     }
 
     pub fn from_lines<'a>(lines: impl Iterator<Item = &'a str>) -> Result<Vec<Self>, CircuitError> {
-        lines.map(CircuitOps::from_str).collect()
+        lines.map(CircuitOp::from_str).collect()
     }
 
+    // TODO: Remove this and just access it directly
     pub fn get_target(&self) -> &usize {
-        use CircuitOps::*;
-        // there has to be a better way :-(
-        match self {
-            Set(target, _)
-            | And(target, _, _)
-            | Or(target, _, _)
-            | Not(target, _)
-            | Lshift(target, _, _)
-            | Rshift(target, _, _) => target,
+        &(self.target)
+    }
+
+    pub fn resolve_operands(&self, with: &Circuit) -> Option<Vec<u16>> {
+        use CircuitOpType::*;
+        let a = self.operand_a.resolve(with);
+        // TODO: remove the clone?
+        let b = self.operand_b.clone().and_then(|b| b.resolve(with));
+        a?;
+
+        match self.op {
+            Set | Not => Some(vec![a.unwrap()]),
+            And | Or | Lshift | Rshift if b.is_some() => Some(vec![a.unwrap(), b.unwrap()]),
+            _ => None,
         }
     }
 
-    pub fn get_depencies(&self) -> Vec<&usize> {
-        use CircuitOps::*;
-        // there has to be a better way :-(
-        match self {
-            Set(_, _) => vec![],
-            Not(_, a) | Lshift(_, a, _) | Rshift(_, a, _) => vec![a],
-            And(_, a, b) | Or(_, a, b) => vec![a, b],
-        }
+    /*/    pub fn get_depencies(&self) -> Vec<&usize> {
+    use CircuitOpType::*;
+    // there has to be a better way :-(
+    let deps => vec![self.operand_a];
+    if let Some(operand_b) = self.operand_b {
+        deps.push(operand_b)
     }
+    match self {
+        Set(_, _) => vec![],
+        Not(_, a) | Lshift(_, a, _) | Rshift(_, a, _) => vec![a],
+        And(_, a, b) | Or(_, a, b) => vec![a, b],
+    }
+    }*/
 }
 
 // We could probably speed this up by using a faster hasher.
@@ -187,53 +278,40 @@ impl Circuit {
     }
 
     pub fn get_wire(&self, wire: &str) -> Option<u16> {
-        self.wires.get(&str_idx(wire)?).cloned()
+        self.get_wire_by_id(&str_idx(wire)?)
     }
 
-    fn deps_ok(&self, op: &CircuitOps) -> bool {
-        op.get_depencies()
-            .iter()
-            .map(|dep| self.wires.contains_key(dep))
-            .all(|f| f)
+    pub fn get_wire_by_id(&self, wire: &usize) -> Option<u16> {
+        self.wires.get(wire).cloned()
     }
 
-    fn run_instruction(&mut self, op: &CircuitOps) -> Result<(), CircuitError> {
-        use CircuitOps::*;
+    fn run_instruction(&mut self, op: &CircuitOp) -> Result<(), CircuitError> {
+        use CircuitOpType::*;
         let target = op.get_target();
         if self.wires.contains_key(target) {
             return Err(CircuitError::WireInUseError());
         }
-        if !self.deps_ok(op) {
-            return Err(CircuitError::UnmetDepsError());
-        }
-        match op {
-            Set(_, v) => self.wires.insert(*target, *v),
-            Not(_, oper_a) => self
-                .wires
-                .insert(*target, self.wires.get(oper_a).unwrap().not()),
-            And(_, oper_a, oper_b) => {
-                let oper_a = self.wires.get(oper_a).unwrap();
-                let oper_b = self.wires.get(oper_b).unwrap();
-                self.wires.insert(*target, oper_a & oper_b)
-            }
-            Or(_, oper_a, oper_b) => {
-                let oper_a = self.wires.get(oper_a).unwrap();
-                let oper_b = self.wires.get(oper_b).unwrap();
-                self.wires.insert(*target, oper_a | oper_b)
-            }
-            Lshift(_, oper_a, amount) => {
-                let oper_a = self.wires.get(oper_a).unwrap();
-                self.wires.insert(*target, oper_a << amount)
-            }
-            Rshift(_, oper_a, amount) => {
-                let oper_a = self.wires.get(oper_a).unwrap();
-                self.wires.insert(*target, oper_a >> amount)
-            }
+
+        let operands = op
+            .resolve_operands(self)
+            .ok_or(CircuitError::UnmetDepsError())?;
+
+        // By this point we're asserting:
+        // * the operation has the correct number of operands (or it wouldn't build)
+        // * the operands are resolvable and resolved (we just did this)
+        // * so we can just assume everything is working and in place and check nothing.
+        match op.op {
+            Set => self.wires.insert(*target, operands[0]),
+            Not => self.wires.insert(*target, operands[0].not()),
+            And => self.wires.insert(*target, operands[0] & operands[1]),
+            Or => self.wires.insert(*target, operands[0] | operands[1]),
+            Lshift => self.wires.insert(*target, operands[0] << operands[1]),
+            Rshift => self.wires.insert(*target, operands[0] >> operands[1]),
         };
         Ok(())
     }
 
-    fn resolve_circuit(&mut self, ops: Vec<CircuitOps>) -> Result<(), CircuitError> {
+    fn resolve_circuit(&mut self, ops: Vec<CircuitOp>) -> Result<(), CircuitError> {
         // There's probably lots of performance badness here.
         let mut removals: Vec<usize> = Vec::new();
         let mut remaining = ops.clone();
@@ -332,20 +410,103 @@ mod test {
         str_idx("zzzzzzzzzzzzzz");
     }
 
+    fn circuit_example() -> [(&'static str, CircuitOp); 8] {
+        use self::CircuitOpType::*;
+        use self::CircuitOperand::*;
+        [
+            (
+                "123 -> x",
+                CircuitOp {
+                    target: 23,
+                    op: Set,
+                    operand_a: Value(123),
+                    operand_b: None,
+                },
+            ),
+            (
+                "456 -> y",
+                CircuitOp {
+                    target: 24,
+                    op: Set,
+                    operand_a: Value(456),
+                    operand_b: None,
+                },
+            ),
+            (
+                "x AND y -> d",
+                CircuitOp {
+                    target: 3,
+                    op: And,
+                    operand_a: Wire(23),
+                    operand_b: Some(Wire(24)),
+                },
+            ),
+            (
+                "x OR y -> e",
+                CircuitOp {
+                    target: 4,
+                    op: Or,
+                    operand_a: Wire(23),
+                    operand_b: Some(Wire(24)),
+                },
+            ),
+            (
+                "x LSHIFT 2 -> f",
+                CircuitOp {
+                    target: 5,
+                    op: Lshift,
+                    operand_a: Wire(23),
+                    operand_b: Some(Value(2)),
+                },
+            ),
+            (
+                "y RSHIFT 2 -> g",
+                CircuitOp {
+                    target: 6,
+                    op: Rshift,
+                    operand_a: Wire(24),
+                    operand_b: Some(Value(2)),
+                },
+            ),
+            (
+                "NOT x -> h",
+                CircuitOp {
+                    target: 7,
+                    op: Not,
+                    operand_a: Wire(23),
+                    operand_b: None,
+                },
+            ),
+            (
+                "NOT y -> i",
+                CircuitOp {
+                    target: 8,
+                    op: Not,
+                    operand_a: Wire(24),
+                    operand_b: None,
+                },
+            ),
+        ]
+    }
+
+    fn circuit_example_results() -> [(&'static str, u16); 8] {
+        [
+            ("d", 72),
+            ("e", 507),
+            ("f", 492),
+            ("g", 114),
+            ("h", 65412),
+            ("i", 65079),
+            ("x", 123),
+            ("y", 456),
+        ]
+    }
+
     #[test]
     fn operator_tokenize_examples() {
-        let examples = [
-            ("123 -> x", CircuitOps::Set(23, 123)),
-            ("456 -> y", CircuitOps::Set(24, 456)),
-            ("x AND y -> d", CircuitOps::And(3, 23, 24)),
-            ("x OR y -> e", CircuitOps::Or(4, 23, 24)),
-            ("x LSHIFT 2 -> f", CircuitOps::Lshift(5, 23, 2)),
-            ("y RSHIFT 2 -> g", CircuitOps::Rshift(6, 24, 2)),
-            ("NOT x -> h", CircuitOps::Not(7, 23)),
-            ("NOT y -> i", CircuitOps::Not(8, 24)),
-        ];
+        let examples = circuit_example();
         for (s, op) in examples {
-            assert_eq!(CircuitOps::from_str(s).unwrap(), op, "enum from {s}")
+            assert_eq!(CircuitOp::from_str(s).unwrap(), op, "enum from {s}")
         }
     }
 
@@ -353,7 +514,13 @@ mod test {
     fn set_wire() -> Result<(), CircuitError> {
         let mut circ = Circuit::new(1);
         let w_a = str_idx("a").unwrap();
-        circ.run_instruction(&CircuitOps::Set(w_a, 123))?;
+        let set = CircuitOp {
+            target: w_a,
+            op: CircuitOpType::Set,
+            operand_a: CircuitOperand::Value(123),
+            operand_b: None,
+        };
+        circ.run_instruction(&set)?;
         assert_eq!(circ.get_wire("a").unwrap(), 123);
         Ok(())
     }
@@ -364,9 +531,29 @@ mod test {
         let w_a = str_idx("a").unwrap();
         let w_b = str_idx("b").unwrap();
         let w_c = str_idx("c").unwrap();
-        circ.run_instruction(&CircuitOps::Set(w_a, 1))?;
-        circ.run_instruction(&CircuitOps::Set(w_b, 2))?;
-        circ.run_instruction(&CircuitOps::Or(w_c, w_a, w_b))?;
+        let set_a = CircuitOp {
+            target: w_a,
+            op: CircuitOpType::Set,
+            operand_a: CircuitOperand::Value(1),
+            operand_b: None,
+        };
+
+        let set_b = CircuitOp {
+            target: w_b,
+            op: CircuitOpType::Set,
+            operand_a: CircuitOperand::Value(2),
+            operand_b: None,
+        };
+        let or_c = CircuitOp {
+            target: w_c,
+            op: CircuitOpType::Or,
+            operand_a: CircuitOperand::Wire(w_a),
+            operand_b: Some(CircuitOperand::Wire(w_b)),
+        };
+
+        circ.run_instruction(&set_a)?;
+        circ.run_instruction(&set_b)?;
+        circ.run_instruction(&or_c)?;
         assert_eq!(circ.get_wire("c").unwrap(), 3);
         Ok(())
     }
@@ -377,71 +564,52 @@ mod test {
         let w_a = str_idx("a").unwrap();
         let w_b = str_idx("b").unwrap();
         let w_c = str_idx("c").unwrap();
-        circ.run_instruction(&CircuitOps::Set(w_a, 3))?;
-        circ.run_instruction(&CircuitOps::Set(w_b, 5))?;
-        circ.run_instruction(&CircuitOps::And(w_c, w_a, w_b))?;
+        let set_a = CircuitOp {
+            target: w_a,
+            op: CircuitOpType::Set,
+            operand_a: CircuitOperand::Value(3),
+            operand_b: None,
+        };
+
+        let set_b = CircuitOp {
+            target: w_b,
+            op: CircuitOpType::Set,
+            operand_a: CircuitOperand::Value(5),
+            operand_b: None,
+        };
+        let and_c = CircuitOp {
+            target: w_c,
+            op: CircuitOpType::And,
+            operand_a: CircuitOperand::Wire(w_a),
+            operand_b: Some(CircuitOperand::Wire(w_b)),
+        };
+
+        circ.run_instruction(&set_a)?;
+        circ.run_instruction(&set_b)?;
+        circ.run_instruction(&and_c)?;
         assert_eq!(circ.get_wire("c").unwrap(), 1);
         Ok(())
     }
 
     #[test]
     fn example_circuit_inorder() -> Result<(), CircuitError> {
-        let instr_str = [
-            "123 -> x",
-            "456 -> y",
-            "x AND y -> d",
-            "x OR y -> e",
-            "x LSHIFT 2 -> f",
-            "y RSHIFT 2 -> g",
-            "NOT x -> h",
-            "NOT y -> i",
-        ];
-        let results = [
-            ("d", 72),
-            ("e", 507),
-            ("f", 492),
-            ("g", 114),
-            ("h", 65412),
-            ("i", 65079),
-            ("x", 123),
-            ("y", 456),
-        ];
-        let ops = CircuitOps::from_lines(instr_str.into_iter())?;
+        let ops = CircuitOp::from_lines(circuit_example().iter().map(|i| i.0))?;
         let mut circ = Circuit::new(ops.len());
         circ.resolve_circuit(ops)?;
-        for (wire, value) in results {
+        for (wire, value) in circuit_example_results() {
             assert_eq!(circ.get_wire(wire).unwrap(), value);
         }
-
         Ok(())
     }
 
     #[test]
     fn example_circuit_out_of_order() -> Result<(), CircuitError> {
-        let instr_str = [
-            "x LSHIFT 2 -> f",
-            "NOT y -> i",
-            "456 -> y",
-            "x OR y -> e",
-            "y RSHIFT 2 -> g",
-            "x AND y -> d",
-            "NOT x -> h",
-            "123 -> x",
-        ];
-        let results = [
-            ("d", 72),
-            ("e", 507),
-            ("f", 492),
-            ("g", 114),
-            ("h", 65412),
-            ("i", 65079),
-            ("x", 123),
-            ("y", 456),
-        ];
-        let ops = CircuitOps::from_lines(instr_str.into_iter())?;
+        let mut ops = CircuitOp::from_lines(circuit_example().iter().map(|i| i.0))?;
+        ops.swap(0, 4);
+        ops.swap(1, 6);
         let mut circ = Circuit::new(ops.len());
         circ.resolve_circuit(ops)?;
-        for (wire, value) in results {
+        for (wire, value) in circuit_example_results() {
             assert_eq!(circ.get_wire(wire).unwrap(), value);
         }
 
