@@ -26,44 +26,40 @@ fn unescape_string(source: &str) -> String {
     let source = source.strip_suffix('"').unwrap_or(source);
     let mut result = String::with_capacity(source.len());
     let mut chars = peek_nth(source.chars());
+
     while let Some(c) = chars.next() {
         let result_char = match c {
             '\\' => {
-                let d = chars.peek();
-                if let Some(d) = d {
-                    match d {
-                        '"' | '\'' | '\\' => {
-                            let unescaped = *d; // make a copy so we can safely advance the iterator
-                            chars.next();
-                            unescaped
-                        }
-                        'x' => {
-                            // d: x
-                            // x1: maybe ascii hex
-                            // x2: maybe ascii hex
-                            let x1 = chars.peek_nth(1).cloned();
-                            let x2 = chars.peek_nth(2).cloned();
-                            let mut maybe_char = None;
-                            let mut result = '\\';
-                            if let (Some(x1), Some(x2)) = (x1, x2) {
-                                if x1.is_ascii_hexdigit() && x2.is_ascii_hexdigit() {
-                                    let hexchar = format!("{x1}{x2}");
-                                    let as_hex = u8::from_str_radix(&hexchar, 16);
-                                    if let Ok(converted) = as_hex {
-                                        maybe_char = Some(char::from(converted));
-                                    }
+                let next = chars.peek();
+                match next {
+                    Some(d @ '"') | Some(d @ '\'') | Some(d @ '\\') => {
+                        let d = *d; // make a copy so we can safely advance the iterator
+                        chars.next();
+                        d
+                    }
+                    Some('x') => {
+                        // x1: maybe ascii hex
+                        // x2: maybe ascii hex
+                        let x1 = chars.peek_nth(1).cloned();
+                        let x2 = chars.peek_nth(2).cloned();
+                        let mut maybe_char = None;
+                        if let (Some(x1), Some(x2)) = (x1, x2) {
+                            if x1.is_ascii_hexdigit() && x2.is_ascii_hexdigit() {
+                                let hexchar = format!("{x1}{x2}");
+                                let as_hex = u8::from_str_radix(&hexchar, 16);
+                                if let Ok(converted) = as_hex {
+                                    maybe_char = Some(char::from(converted));
                                 }
                             }
-                            if let Some(decoded) = maybe_char {
-                                chars.nth(2); // on success, discard the processed characters
-                                result = decoded;
-                            }
-                            result
                         }
-                        _ => '\\',
+                        if let Some(decoded) = maybe_char {
+                            chars.nth(2); // on success, discard the 3 processed characters
+                            decoded
+                        } else {
+                            '\\'
+                        }
                     }
-                } else {
-                    '\\'
+                    _ => '\\',
                 }
             }
             _ => c,
