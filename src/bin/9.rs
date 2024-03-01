@@ -18,28 +18,29 @@ pub fn main() {
         .count()
         + 1;
 
-    let mut names: Vec<String> = Vec::with_capacity(total_locations);
     let mut name_lookup: HashMap<String, usize> = HashMap::with_capacity(total_locations);
     let mut distances: Vec<Vec<u16>> = vec![vec![0; total_locations]; total_locations];
 
+    // Build a lookup table for the distance between every pair of locations
     for (a, b, dist) in raw_routes {
-        let a_idx = insert_or_index(&a, &mut names, &mut name_lookup);
-        let b_idx = insert_or_index(&b, &mut names, &mut name_lookup);
+        let a_idx = insert_or_index(&a, &mut name_lookup);
+        let b_idx = insert_or_index(&b, &mut name_lookup);
         distances[a_idx][b_idx] = dist;
         distances[b_idx][a_idx] = dist;
     }
+
     let (tx, rx) = mpsc::channel();
     let possible_routes = (0..total_locations).permutations(total_locations);
-
     let local_distances = Arc::new(distances);
+
     for starting_location in 0..total_locations {
         let thread_tx = tx.clone();
         let thread_routes = possible_routes.clone();
         let thread_distances = Arc::clone(&local_distances);
         thread::spawn(move || {
-            let mut best_path = vec![];
             let thread_routes = thread_routes.filter(|x| x[0] == starting_location);
             let mut best_distance = u16::MAX;
+            let mut worst_distance = 0;
             for path in thread_routes {
                 if path[0] != starting_location {
                     continue;
@@ -50,47 +51,35 @@ pub fn main() {
                     let to = segment[1];
                     current_distance += thread_distances[from][to];
                 }
-                if current_distance < best_distance {
-                    best_distance = current_distance;
-                    best_path = path;
-                }
+                best_distance = best_distance.min(current_distance);
+                worst_distance = worst_distance.max(current_distance);
             }
-            println!(
-                "Thread for starting location {starting_location} sending my best path {:?} with distance {best_distance}",
-                best_path
-            );
             thread_tx
-                .send((best_distance, best_path))
+                .send((best_distance, worst_distance))
                 .expect("Failed to send result");
         });
     }
 
-    let mut best_path = vec![];
     let mut best_distance = u16::MAX;
+    let mut worst_distance = 0;
     for _ in 0..total_locations {
-        let (thread_distance, thread_path) = rx.recv().unwrap();
-        if thread_distance < best_distance {
-            best_distance = thread_distance;
-            best_path = thread_path;
-        }
+        let (result_best, result_worst) = rx.recv().unwrap();
+        best_distance = best_distance.min(result_best);
+        worst_distance = worst_distance.max(result_worst);
     }
-    println!("---");
-    println!(
-        "Shortest distance is {best_distance} using path {:?}",
-        best_path
+
+    aoc_2015::aoc_io::put_aoc_named_output(
+        (Some(best_distance), Some(worst_distance)),
+        "Shortest possible path",
+        "Longest possible path",
     );
 }
 
-pub fn insert_or_index(
-    name: &str,
-    all_names: &mut Vec<String>,
-    lookup: &mut HashMap<String, usize>,
-) -> usize {
+pub fn insert_or_index(name: &str, lookup: &mut HashMap<String, usize>) -> usize {
     match lookup.get(name) {
         Some(index) => *index,
         None => {
-            let index = all_names.len();
-            all_names.push(name.to_owned());
+            let index = lookup.len();
             lookup.insert(name.to_owned(), index);
             index
         }
