@@ -20,6 +20,12 @@ pub mod aoc_io {
         reader.lines()
     }
 
+    pub fn get_collected_input_as_lines(day: u8) -> Vec<String> {
+        let buf = get_input_as_lines(day);
+        let lines: Result<Vec<String>, _> = buf.collect();
+        lines.expect("Failed to read input")
+    }
+
     fn get_file_from_day(day: u8) -> File {
         let pathstring = format!("inputs/input.{}.txt", day);
         let path = Path::new(&pathstring);
