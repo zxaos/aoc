@@ -66,25 +66,6 @@ enum CircuitOperand {
 }
 
 impl CircuitOperand {
-    pub fn resolve_memo(&mut self, c: &Circuit) -> Option<u16> {
-        use self::CircuitOperand::*;
-        if let Value(result) = self {
-            return Some(*result);
-        }
-
-        if let Wire(wire_id) = self {
-            if let Some(wire_value) = c.get_wire_by_id(wire_id) {
-                let mut newself = Value(wire_value);
-                std::mem::swap(&mut newself, self);
-                Some(wire_value)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
     /// Return the resolved value of an operand, or None if the wire has no output
     pub fn resolve(&self, c: &Circuit) -> Option<u16> {
         use self::CircuitOperand::*;
