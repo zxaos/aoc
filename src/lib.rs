@@ -15,8 +15,7 @@ pub mod aoc_io {
     }
 
     pub fn get_input_as_lines(day: u8) -> io::Lines<io::BufReader<File>> {
-        let file = get_file_from_day(day);
-        let reader = io::BufReader::new(file);
+        let reader = get_input_as_reader(day);
         reader.lines()
     }
 
@@ -24,6 +23,11 @@ pub mod aoc_io {
         let buf = get_input_as_lines(day);
         let lines: Result<Vec<String>, _> = buf.collect();
         lines.expect("Failed to read input")
+    }
+
+    pub fn get_input_as_reader(day: u8) -> io::BufReader<File> {
+        let file = get_file_from_day(day);
+        io::BufReader::new(file)
     }
 
     fn get_file_from_day(day: u8) -> File {
