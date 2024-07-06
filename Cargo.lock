@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "itertools",
  "md5",
+ "micromap",
  "serde_json",
  "thiserror",
 ]
@@ -38,6 +39,12 @@ name = "md5"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
+
+[[package]]
+name = "micromap"
+version = "0.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5b72ada413a5bd6bc65d6eef149fdc5138298f3bb89653d1a521f0fea7f9c73"
 
 [[package]]
 name = "proc-macro2"
