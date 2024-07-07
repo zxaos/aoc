@@ -8,8 +8,8 @@ use micromap::Set;
 
 use itertools::Itertools;
 
-type WeightMap = Map<u16, i16, 28>;
-type GuestList = Set<char, 8>;
+type WeightMap = Map<u16, i16, 29>;
+type GuestList = Set<char, 9>;
 
 pub fn main() {
     let lines = aoc_2015::aoc_io::get_collected_input_as_lines(13);
@@ -18,20 +18,27 @@ pub fn main() {
     raw_weights
         .iter()
         .for_each(|(name, _, _)| names.insert(name.chars().next().unwrap()));
-    let weights = build_weighting_table(raw_weights);
-    let result = search_exhaustive(names, weights);
-    aoc_2015::aoc_io::put_aoc_output((Some(result.0), None))
+    let mut weights = build_weighting_table(raw_weights);
+    let result_1 = search_exhaustive(&names, weights.clone());
+    weights.insert(0, 0);
+    names.insert('0');
+    let result_2 = search_exhaustive(&names, weights);
+    aoc_2015::aoc_io::put_aoc_output((Some(result_1), Some(result_2)));
 }
 
 /* A bunch of assumptions here, validated by looking at our puzzle input:
  * The first letter of each person's name is unique.
- * The count of guests is exactly 8
+ * The count of guests is exactly 8 (+1)
  * The graph is fully connected.
  * 8C2 = 28, so we can should use micromap instead of proper HashMap for speed
  * We're hardcoding in the map size for performance and cannot accept larger guest lists
+ * +1 for special zero value
 */
 
 fn key_from_chars(a: char, b: char) -> u16 {
+    if a == '0' || b == '0' {
+        return 0;
+    }
     let a: u16 = a as u16;
     let b: u16 = b as u16;
     if a < b {
@@ -64,7 +71,7 @@ fn build_weighting_table<T: AsRef<str> + std::fmt::Debug>(edges: Vec<(T, T, i16)
     weights
 }
 
-fn search_exhaustive(guests: GuestList, weights: WeightMap) -> (i32, i32) {
+fn search_exhaustive(guests: &GuestList, weights: WeightMap) -> i32 {
     let (tx, rx) = mpsc::channel();
 
     // get permutations of guests
@@ -80,7 +87,6 @@ fn search_exhaustive(guests: GuestList, weights: WeightMap) -> (i32, i32) {
         let thread_tx = tx.clone();
         thread::spawn(move || {
             let mut best = i32::MIN;
-            let mut worst = i32::MAX;
             for arrangement in thread_permutation.iter() {
                 if arrangement[0] != thread_init {
                     continue;
@@ -103,22 +109,17 @@ fn search_exhaustive(guests: GuestList, weights: WeightMap) -> (i32, i32) {
                 );
 
                 best = best.max(score);
-                worst = worst.min(score);
             }
-            thread_tx
-                .send((best, worst))
-                .expect("Failed to send result");
+            thread_tx.send(best).expect("Failed to send result");
         });
     }
 
     let mut best_all_threads = ::std::i32::MIN;
-    let mut worst_all_threads = ::std::i32::MAX;
     for _ in template_guests.iter() {
         let result = rx.recv().unwrap();
-        best_all_threads = best_all_threads.max(result.0);
-        worst_all_threads = worst_all_threads.min(result.1);
+        best_all_threads = best_all_threads.max(result);
     }
-    (best_all_threads, worst_all_threads)
+    best_all_threads
 }
 
 fn parseline(line: &str) -> (String, String, i16) {
@@ -205,15 +206,12 @@ mod test {
             ("David", "Carol", 41),
         ];
         let mut guests: GuestList = Set::new();
-        println!("Building Guest List");
         guests.insert('A');
         guests.insert('B');
         guests.insert('C');
         guests.insert('D');
-        println!("Building Table");
         let table = build_weighting_table(test_weights);
-        println!("table: {:?}", table);
-        let result = search_exhaustive(guests, table);
-        assert_eq!(result.0, 330);
+        let result = search_exhaustive(&guests, table);
+        assert_eq!(result, 330);
     }
 }
