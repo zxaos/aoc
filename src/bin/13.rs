@@ -11,6 +11,10 @@ use itertools::Itertools;
 type WeightMap = Map<u16, i16, 29>;
 type GuestList = Set<char, 9>;
 
+/*
+This isn't a great solution. It's brute force, it copies around more memory than it should,
+and it runs the entire solution a second time to calculate the second part.
+*/
 pub fn main() {
     let lines = aoc_2015::aoc_io::get_collected_input_as_lines(13);
     let raw_weights: Vec<(String, String, i16)> = lines.iter().map(|l| parseline(l)).collect();
