@@ -1,3 +1,4 @@
+use aoc_2015::aoc_io::Solution;
 use std::{
     sync::{mpsc, Arc},
     thread,
@@ -14,8 +15,12 @@ type GuestList = Set<char, 9>;
 /*
 This isn't a great solution. It's brute force, it copies around more memory than it should,
 and it runs the entire solution a second time to calculate the second part.
+
+Instead, for part two we should track the worst scoring pair in any arrangement and inject
+the 0 guest at that point and track it as a parallel best score
 */
 pub fn main() {
+    let mut solution: Solution<i32, &str> = Solution::new();
     let lines = aoc_2015::aoc_io::get_collected_input_as_lines(13);
     let raw_weights: Vec<(String, String, i16)> = lines.iter().map(|l| parseline(l)).collect();
     let mut names: GuestList = Set::new();
@@ -23,11 +28,13 @@ pub fn main() {
         .iter()
         .for_each(|(name, _, _)| names.insert(name.chars().next().unwrap()));
     let mut weights = build_weighting_table(raw_weights);
-    let result_1 = search_exhaustive(&names, weights.clone());
+    solution[0].solution = Some(search_exhaustive(&names, weights.clone()));
+    solution[0].description = Some("Best possible seating score (no host)");
     weights.insert(0, 0);
     names.insert('0');
-    let result_2 = search_exhaustive(&names, weights);
-    aoc_2015::aoc_io::put_aoc_output((Some(result_1), Some(result_2)));
+    solution[1].solution = Some(search_exhaustive(&names, weights));
+    solution[1].description = Some("Best possible seating score (with host)");
+    solution.print();
 }
 
 /* A bunch of assumptions here, validated by looking at our puzzle input:
@@ -76,39 +83,48 @@ fn build_weighting_table<T: AsRef<str> + std::fmt::Debug>(edges: Vec<(T, T, i16)
 }
 
 fn search_exhaustive(guests: &GuestList, weights: WeightMap) -> i32 {
+    // Fix the first guest in place, then run the permutations of every other guest.
+    // This removes entire chunks of rotationally equivalent arrangements
     let (tx, rx) = mpsc::channel();
 
     // get permutations of guests
-    let template_permutations: Vec<Vec<char>> =
-        guests.iter().cloned().permutations(guests.len()).collect();
+    let fixed_guest = *guests.iter().next().unwrap();
+    let template_permutations: Vec<Vec<char>> = guests
+        .iter()
+        .skip(1)
+        .cloned()
+        .permutations(guests.len() - 1)
+        .collect();
     let template_permutations = Arc::new(template_permutations);
     let template_guests = Arc::new(guests);
     let template_weights = Arc::new(weights);
-    for initial in template_guests.iter() {
+    for initial in template_guests.iter().skip(1) {
         let thread_init = *initial;
         let thread_permutation = Arc::clone(&template_permutations);
         let thread_weights = Arc::clone(&template_weights);
         let thread_tx = tx.clone();
         thread::spawn(move || {
             let mut best = i32::MIN;
+            let first_guest = [fixed_guest];
             for arrangement in thread_permutation.iter() {
                 if arrangement[0] != thread_init {
                     continue;
                 }
-
                 let mut score: i32 = 0;
-                for pair in arrangement.windows(2) {
-                    let key = key_from_chars(pair[0], pair[1]);
+                // Now re-add the fixed first guest
+                let arr_and_fixed: Vec<&char> =
+                    first_guest.iter().chain(arrangement.iter()).collect();
+
+                for pair in arr_and_fixed.windows(2) {
+                    let key = key_from_chars(*pair[0], *pair[1]);
                     let weight = *thread_weights.get(&key).unwrap();
                     score += i32::from(weight);
                 }
-                // last and first guests
+
+                // Add score for last and first pair
                 score += i32::from(
                     *thread_weights
-                        .get(&key_from_chars(
-                            thread_init,
-                            arrangement[arrangement.len() - 1],
-                        ))
+                        .get(&key_from_chars(*arrangement.last().unwrap(), fixed_guest))
                         .unwrap(),
                 );
 
@@ -119,7 +135,7 @@ fn search_exhaustive(guests: &GuestList, weights: WeightMap) -> i32 {
     }
 
     let mut best_all_threads = ::std::i32::MIN;
-    for _ in template_guests.iter() {
+    for _ in 0..template_guests.len() - 1 {
         let result = rx.recv().unwrap();
         best_all_threads = best_all_threads.max(result);
     }
