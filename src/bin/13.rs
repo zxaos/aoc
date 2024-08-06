@@ -35,7 +35,6 @@ pub fn main() {
  * The graph is fully connected.
  * 8C2 = 28, so we can should use micromap instead of proper HashMap for speed
  * We're hardcoding in the map size for performance and cannot accept larger guest lists
- * +1 for special zero value
 */
 
 fn key_from_chars(a: char, b: char) -> u16 {
