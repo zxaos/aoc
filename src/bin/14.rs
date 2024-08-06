@@ -35,13 +35,13 @@ fn max_indices(xs: &Vec<u64>) -> Vec<usize> {
     let mut max = xs[0];
     let mut maxidx = vec![0];
 
-    for (idx, val) in xs.iter().enumerate().skip(1) {
+    for (idx, &val) in xs.iter().enumerate().skip(1) {
         #[allow(clippy::comparison_chain)]
-        if *val > max {
-            max = *val;
+        if val > max {
+            max = val;
             maxidx.clear();
             maxidx.push(idx);
-        } else if *val == max {
+        } else if val == max {
             maxidx.push(idx);
         }
     }
@@ -63,8 +63,8 @@ fn main() {
     let mut current_winners: Vec<usize>;
     for sec in 1..2504 {
         current_winners = max_indices(&(reindeer.iter().map(|r| r.travel(sec)).collect()));
-        for w in current_winners.iter() {
-            scores[*w] += 1
+        for &w in current_winners.iter() {
+            scores[w] += 1
         }
         current_winners.clear();
     }
