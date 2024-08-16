@@ -12,6 +12,7 @@ fn main() {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum ParseError {
     InstructionError(String),
     RectangleError(String),

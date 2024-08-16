@@ -38,7 +38,7 @@ fn next_valid_password(current: &str) -> String {
 }
 
 const BANNED_LETTERS: [u8; 3] = [b'i', b'l', b'o'];
-fn validate_password(password: &Vec<u8>) -> bool {
+fn validate_password(password: &[u8]) -> bool {
     // Passwords must be exactly eight lowercase letters (for security reasons)
     // Passwords may not contain the letters i, o, or l, as these letters can be mistaken for other characters and are therefore confusing.
     // Passwords must include one increasing straight of at least three letters, like abc, bcd, cde, and so on, up to xyz. They cannot skip letters; abd doesn't count.

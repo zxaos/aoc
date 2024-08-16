@@ -58,7 +58,7 @@ impl From<&str> for Ingredient {
     }
 }
 
-fn cal_cookie(ingredients: &Vec<Ingredient>, counts: &Vec<usize>) -> u32 {
+fn cal_cookie(ingredients: &Vec<Ingredient>, counts: &[usize]) -> u32 {
     assert_eq!(
         ingredients.len(),
         counts.len(),
@@ -68,7 +68,7 @@ fn cal_cookie(ingredients: &Vec<Ingredient>, counts: &Vec<usize>) -> u32 {
     zip(ingredients, counts).map(|(i, c)| i.calories * c).sum()
 }
 
-fn score_cookie(ingredients: &Vec<Ingredient>, counts: &Vec<usize>) -> u32 {
+fn score_cookie(ingredients: &Vec<Ingredient>, counts: &[usize]) -> u32 {
     assert_eq!(
         ingredients.len(),
         counts.len(),
@@ -118,7 +118,7 @@ mod test {
             calories: 3,
         };
         assert_eq!(
-            score_cookie(&vec![bscotch, cinnamon], &vec![44, 56]),
+            score_cookie(&vec![bscotch, cinnamon], &[44, 56]),
             62_842_880
         );
     }
@@ -133,6 +133,6 @@ mod test {
             scores: [2, 3, -2, -1],
             calories: 3,
         };
-        assert_eq!(cal_cookie(&vec![bscotch, cinnamon], &vec![40, 60]), 500);
+        assert_eq!(cal_cookie(&vec![bscotch, cinnamon], &[40, 60]), 500);
     }
 }

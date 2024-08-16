@@ -28,6 +28,7 @@ impl Reindeer {
     }
 }
 
+#[allow(clippy::ptr_arg)]
 fn max_indices(xs: &Vec<u64>) -> Vec<usize> {
     if xs.is_empty() {
         return vec![];

@@ -126,8 +126,8 @@ fn search_exhaustive(guests: &GuestList, weights: WeightMap) -> (i32, i32) {
         });
     }
 
-    let mut best_all_threads = ::std::i32::MIN;
-    let mut best_all_threads_host = ::std::i32::MIN;
+    let mut best_all_threads = i32::MIN;
+    let mut best_all_threads_host = i32::MIN;
     for _ in 0..template_guests.len() - 1 {
         let result = rx.recv().unwrap();
         best_all_threads = best_all_threads.max(result.0);
