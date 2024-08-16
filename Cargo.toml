@@ -9,5 +9,6 @@ edition = "2021"
 itertools = "0.12"
 md5 = "0.7.0"
 micromap = "0.0.15"
+miette = { version = "7.2.0", features = ["fancy"] }
 serde_json = "1.0"
 thiserror = "1.0"
