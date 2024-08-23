@@ -3,7 +3,7 @@ use std::iter::zip;
 
 const MAX_INGREDIENTS: usize = 100;
 fn main() {
-    let mut solution: Solution<u32, &str> = Solution::new();
+    let mut solution: Solution<u32> = Solution::new();
     let ingredients = aoc_io::get_input_as_lines(15)
         .map(|l| Ingredient::from(l.expect("Couldn't read line").as_str()))
         .collect();

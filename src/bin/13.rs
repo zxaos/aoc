@@ -13,7 +13,7 @@ type WeightMap = Map<u16, i32, 28>;
 type GuestList = Set<char, 8>;
 
 pub fn main() {
-    let mut solution: Solution<i32, &str> = Solution::new();
+    let mut solution: Solution<i32> = Solution::new();
     let lines = aoc_2015::aoc_io::get_collected_input_as_lines(13);
     let raw_weights: Vec<(String, String, i32)> = lines.iter().map(|l| parseline(l)).collect();
     let mut names: GuestList = Set::new();

@@ -65,12 +65,16 @@ pub mod aoc_io {
     }
 
     #[derive(Default)]
-    pub struct SolutionHalf<S: Display, D: AsRef<str>> {
+    pub struct SolutionHalf<S, D = &'static str>
+    where
+        S: Display,
+        D: Display,
+    {
         pub solution: Option<S>,
         pub description: Option<D>,
     }
 
-    impl<S: Display, D: AsRef<str> + Display> fmt::Display for SolutionHalf<S, D> {
+    impl<S: Display, D: Display> fmt::Display for SolutionHalf<S, D> {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             if let Some(solution) = &self.solution {
                 if let Some(description) = &self.description {
@@ -85,9 +89,9 @@ pub mod aoc_io {
     }
 
     #[derive(Default)]
-    pub struct Solution<S: Display, D: AsRef<str>>(pub [SolutionHalf<S, D>; 2]);
+    pub struct Solution<S: Display, D: Display = &'static str>(pub [SolutionHalf<S, D>; 2]);
 
-    impl<S: Display, D: AsRef<str> + Display> Solution<S, D> {
+    impl<S: Display, D: Display> Solution<S, D> {
         pub fn new() -> Self {
             let first: SolutionHalf<S, D> = SolutionHalf {
                 solution: None,
@@ -105,13 +109,13 @@ pub mod aoc_io {
         }
     }
 
-    impl<S: Display, D: AsRef<str> + Display> fmt::Display for Solution<S, D> {
+    impl<S: Display, D: Display> fmt::Display for Solution<S, D> {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "Part 1: {}\nPart 2: {}", self.0[0], self.0[1])
         }
     }
 
-    impl<S: Display, D: AsRef<str>> Deref for Solution<S, D> {
+    impl<S: Display, D: Display> Deref for Solution<S, D> {
         type Target = [SolutionHalf<S, D>; 2];
 
         fn deref(&self) -> &Self::Target {
@@ -119,98 +123,20 @@ pub mod aoc_io {
         }
     }
 
-    impl<S: Display, D: AsRef<str>> DerefMut for Solution<S, D> {
+    impl<S: Display, D: Display> DerefMut for Solution<S, D> {
         fn deref_mut(&mut self) -> &mut Self::Target {
             &mut self.0
         }
     }
 
-    //     pub struct Solution<S: Into<String>, T: Display> {
-    //         first: SingleSolution<T>,
-    //         second: SingleSolution<T>,
-    //         puzzle: u8,
-    //     }
-
-    //     impl<S: Into<String>, T: Display> Solution<S, T> {
-    //         pub fn new(puzzle: u8) -> Self {
-    //             self::Solution {
-    //                 first: SingleSolution::new(),
-    //                 second: SingleSolution::new(),
-    //                 puzzle,
-    //             }
-    //         }
-    //     }
-
-    //     impl<S: Into<String>, T: Display> Index<usize> for Solution<S, T> {
-    //         type Output = SingleSolution<T>;
-
-    //         fn index(&self, index: usize) -> &Self::Output {
-    //             match index {
-    //                 0 => &self.first,
-    //                 1 => &self.second,
-    //                 _ => panic!("Invalid index"),
-    //             }
-    //         }
-    //     }
-
-    //     impl<S: Into<String>, T: Display> IndexMut<usize> for Solution<S, T> {
-    //         fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-    //             match index {
-    //                 0 => &mut self.first,
-    //                 1 => &mut self.second,
-    //                 _ => panic!("Invalid index"),
-    //             }
-    //         }
-    //     }
-
-    //     impl<S: Into<String>, T: Display> fmt::Display for Solution<S, T> {
-    //         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    //             write!(
-    //                 f,
-    //                 "Puzzle {}:\nPart 1: {}\nPart 2: {}",
-    //                 self.puzzle, self.first, self.second
-    //             )
-    //         }
-    //     }
-
-    //     pub struct SingleSolution<T: Display> {
-    //         solution: Option<T>,
-    //         description: Option<String>,
-    //     }
-
-    //     impl<T: Display> fmt::Display for SingleSolution<T> {
-    //         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    //             if let Some(solution) = &self.solution {
-    //                 if let Some(description) = &self.description {
-    //                     write!(f, "{}: {}", description, solution)
-    //                 } else {
-    //                     write!(f, "{}", solution)
-    //                 }
-    //             } else {
-    //                 write!(f, "(None yet)")
-    //             }
-    //         }
-    //     }
-    //     impl<T: Display> SingleSolution<T> {
-    //         fn new() -> Self {
-    //             SingleSolution {
-    //                 solution: None,
-    //                 description: None,
-    //             }
-    //         }
-    //     }
-}
-
-#[cfg(test)]
-mod test {
-    use aoc_io::Solution;
-
-    use super::*;
-
-    #[test]
-    fn test_solution_display() {
-        let mut solution: Solution<u32, &str> = aoc_io::Solution::default();
-        solution[0].solution = Some(42);
-        solution[0].description = Some("foo");
+    #[cfg(test)]
+    mod test {
+        use super::*;
+        #[test]
+        fn test_solution_display() {
+            let mut solution: Solution<u32> = Solution::default();
+            solution[0].solution = Some(42);
+            solution[0].description = Some("foo");
+        }
     }
 }

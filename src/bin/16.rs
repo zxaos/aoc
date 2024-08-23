@@ -12,7 +12,7 @@ type Criteria = [Ops; 10];
 
 fn main() {
     let input = aoc_2015::aoc_io::get_input_as_lines(16);
-    let mut solution: Solution<usize, &str> = Solution::new();
+    let mut solution: Solution<usize> = Solution::new();
     let sues: [Sue; 500] = input
         .map(|line| Sue::from(line.expect("failed to read input").as_str()))
         .collect::<Vec<_>>()

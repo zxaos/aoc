@@ -5,7 +5,7 @@ use miette::IntoDiagnostic;
 const TARGET: u16 = 150;
 
 fn main() -> miette::Result<()> {
-    let mut solution: Solution<usize, &str> = Solution::new();
+    let mut solution: Solution<usize> = Solution::new();
 
     let containers: Vec<String> = aoc_2015::aoc_io::get_input_as_lines(17)
         .collect::<Result<Vec<String>, _>>()

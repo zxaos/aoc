@@ -56,7 +56,7 @@ fn main() {
         .map(|(speed, timeout, cooldown)| Reindeer::new(speed, timeout, cooldown))
         .collect();
     let after_secs = reindeer.iter().map(|r| r.travel(2503));
-    let mut solution: Solution<u64, &str> = Solution::new();
+    let mut solution: Solution<u64> = Solution::new();
     solution[0].solution = after_secs.max();
     solution[0].description = Some("Furthest distance after 2503 seconds");
 
