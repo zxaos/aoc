@@ -11,7 +11,6 @@ type Replacement = (String, Vec<String>);
 
 fn main() -> Result<()> {
     let raw_input = aoc_2015::aoc_io::get_collected_input_as_lines(19);
-    let _ = parse_replacement("Ca => SiRnFYFAr");
     Ok(())
 }
 
@@ -30,11 +29,8 @@ fn parse_replacement<S: Into<String>>(line: S) -> Result<Replacement> {
         return Err(Err19::InvalidInput(line.clone())).into_diagnostic();
     };
 
-    // reverse the products so we can split by uppercase divider, then un-reverse each product
-    let to: Vec<String> = reverse(to)
-        .split_inclusive(char::is_uppercase)
-        .map(reverse)
-        .collect();
+    let to = to_elements(to);
+
     Ok((from, to))
 }
 
@@ -46,9 +42,11 @@ fn reverse(i: &str) -> String {
 }
 
 fn to_elements(i: &str) -> Vec<String> {
-    // let mut result = Vec::with_capacity(i.len());
-    // i.iter()()
-    todo!()
+    // reverse the products so we can split by uppercase divider, then un-reverse each product
+    reverse(i)
+        .split_inclusive(char::is_uppercase)
+        .map(reverse)
+        .collect()
 }
 
 #[cfg(test)]
