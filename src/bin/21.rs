@@ -7,26 +7,31 @@ const WEAPONS: [Item; 5] = [
         cost: 8,
         damage: 4,
         armor: 0,
+        name: "Dagger",
     },
     Item {
         cost: 10,
         damage: 5,
         armor: 0,
+        name: "Shortsword",
     },
     Item {
         cost: 25,
         damage: 6,
         armor: 0,
+        name: "Warhammer",
     },
     Item {
         cost: 40,
         damage: 7,
         armor: 0,
+        name: "Longsword",
     },
     Item {
         cost: 74,
         damage: 8,
         armor: 0,
+        name: "Greataxe",
     },
 ];
 
@@ -35,26 +40,31 @@ const ARMOR: [Item; 5] = [
         cost: 13,
         damage: 0,
         armor: 1,
+        name: "Leather",
     },
     Item {
         cost: 31,
         damage: 0,
         armor: 2,
+        name: "Chainmail",
     },
     Item {
         cost: 53,
         damage: 0,
         armor: 3,
+        name: "Splintmail",
     },
     Item {
         cost: 75,
         damage: 0,
         armor: 4,
+        name: "Bandedmail",
     },
     Item {
         cost: 102,
         damage: 0,
         armor: 5,
+        name: "Platemail",
     },
 ];
 
@@ -63,31 +73,37 @@ const RINGS: [Item; 6] = [
         cost: 25,
         damage: 1,
         armor: 0,
+        name: "Damage +1",
     },
     Item {
         cost: 50,
         damage: 2,
         armor: 0,
+        name: "Damage +2",
     },
     Item {
         cost: 100,
         damage: 3,
         armor: 0,
+        name: "Damage +3",
     },
     Item {
         cost: 20,
         damage: 0,
         armor: 1,
+        name: "Defense +1",
     },
     Item {
         cost: 40,
         damage: 0,
         armor: 2,
+        name: "Defense +2",
     },
     Item {
         cost: 80,
         damage: 0,
         armor: 3,
+        name: "Defense +3",
     },
 ];
 
@@ -126,26 +142,17 @@ fn main() -> Result<()> {
         items: vec![],
     };
 
-    let player_scenarios: Vec<(CombatResult, Actor)> = generate_scenarios(&player_template)
+    // Run the scenarios and group them into wins and losses along with the associated item costs
+    let (wins, losses): (Vec<(_, _)>, Vec<(_, _)>) = generate_scenarios(&player_template)
         .into_iter()
-        .map(|mut p| (p.combat(&mut boss_template.clone()), p))
-        .collect();
+        .map(|mut p| (p.combat(&mut boss_template.clone()), p.item_cost()))
+        .partition(|(result, _)| matches!(result, CombatResult::Win));
 
-    let lowest_win = player_scenarios
-        .iter()
-        .filter(|(result, _)| matches!(result, CombatResult::Win))
-        .map(|(_, p)| p.item_cost())
-        .min();
+    let lowest_win = wins.iter().map(|s| s.1).min();
+    let highest_loss = losses.iter().map(|s| s.1).max();
 
     solution[0].solution = lowest_win;
     solution[0].description = Some("Lowest amount payable to win");
-
-    let highest_loss = player_scenarios
-        .iter()
-        .filter(|(result, _)| matches!(result, CombatResult::Loss))
-        .map(|(_, p)| p.item_cost())
-        .max();
-
     solution[1].solution = highest_loss;
     solution[1].description = Some("Highest amount payable to lose");
 
@@ -169,10 +176,12 @@ struct Actor<'a> {
 }
 
 #[derive(Debug, Clone)]
+#[allow(unused)] // keep the name around for debugging
 struct Item {
     cost: u32,
     damage: i32,
     armor: i32,
+    name: &'static str,
 }
 
 impl<'a> Actor<'a> {
@@ -240,12 +249,12 @@ fn generate_scenarios<'items>(player: &Actor<'items>) -> Vec<Actor<'items>> {
     // Wrap the outputs in a Vec so that we can represent choosing 0 (armor)
     // and so that we have a consistent type with combinations for rings
     let weapons_t: ItemSet = WEAPONS.iter().map(vec_wrap).collect();
-    let armor_t = ARMOR.iter().map(vec_wrap).chain(vec![]).collect();
+    let armor_t = ARMOR.iter().map(vec_wrap).chain([vec![]]).collect();
     let rings_t = RINGS
         .iter()
         .combinations(2)
         .chain(RINGS.iter().map(vec_wrap)) // effectively, combinations(1)
-        .chain([vec![]])
+        .chain([vec![]]) // add the empty option
         .collect();
 
     [weapons_t, armor_t, rings_t]
@@ -270,11 +279,13 @@ mod test {
             cost: 0,
             damage: 5,
             armor: 0,
+            name: "test1",
         };
         let a = Item {
             cost: 0,
             damage: 0,
             armor: 5,
+            name: "test2",
         };
         let mut player = Actor {
             health: 8,
